@@ -1,20 +1,6 @@
-# Copyright 2018 Google LLC
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     https://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 
 '''
-This Cloud function is responsible for:
+Cloud function :
 - Parsing and validating new files added to Cloud Storage.
 - Checking for duplications.
 - Inserting files' content into BigQuery.
@@ -30,8 +16,6 @@ from datetime import datetime
 
 from google.api_core import retry
 from google.cloud import bigquery
-from google.cloud import firestore
-from google.cloud import pubsub_v1
 from google.cloud import storage
 import pytz
 
@@ -42,7 +26,6 @@ BQ_DATASET = 'mydataset'
 BQ_TABLE = 'mytable'
 ERROR_TOPIC = 'projects/%s/topics/%s' % (PROJECT_ID, 'streaming_error_topic')
 SUCCESS_TOPIC = 'projects/%s/topics/%s' % (PROJECT_ID, 'streaming_success_topic')
-DB = firestore.Client()
 CS = storage.Client()
 PS = pubsub_v1.PublisherClient()
 BQ = bigquery.Client()
@@ -52,7 +35,9 @@ def streaming(data, context):
     '''This function is executed whenever a file is added to Cloud Storage'''
     bucket_name = data['bucket']
     file_name = data['name']
-    db_ref = DB.document(u'streaming_files/%s' % file_name)
+
+    db_ref = storage.Blob(bucket_name, file_name)
+
     if _was_already_ingested(db_ref):
         _handle_duplication(db_ref)
     else:
